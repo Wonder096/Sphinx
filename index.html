@@ -1,1 +1,248 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Hall of Glory</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  
+  <div id="landingView" class="landing-wrap">
+    <div class="landing-content">
+      <h1 class="landing-title">테일즈런너 점령&amp;내전 점수 계산기</h1>
+      <h2 class="landing-subtitle">Hall of Glory</h2>
+      <p class="landing-author">제작 : Xesi</p>
+      
+      <div class="landing-actions">
+        <button id="btnOccMode" class="landing-btn btn-occ">점령 점수 계산<br><small>(개인전 4인)</small></button>
+        <button id="btnCivilMode" class="landing-btn btn-civil">내전 점수 계산<br><small>(팀전 8인)</small></button>
+      </div>
 
+      <div class="landing-admin-box hidden"> // hidden 지우면 항목 생김.
+        <button id="btnLandingSettings" class="admin-text-btn btn-setting">⚙️ 점수 설정</button>
+        <button id="btnLandingPinball" class="admin-text-btn btn-pinball">🎲 내전 핀볼</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mainAppView" class="wrap hidden">
+    <header class="top">
+      <div class="brand">
+        <h1>Hall of Glory</h1>
+      </div>
+    </header>
+
+    <div class="tabs-container" id="tabsContainer"></div>
+
+    <section class="card" id="registerCard">
+      <div class="card-head">
+        <h2>선수 등록</h2>
+        <div class="hint" id="registerHint"></div>
+      </div>
+      <div id="playerInputs" class="grid-wrap"></div>
+      <div class="row">
+        <button id="savePlayers" class="primary">등록 완료</button>
+      </div>
+    </section>
+
+    <div class="main-layout hidden" id="mainBoard">
+      <section class="card" id="scoreCard">
+        <div class="card-head">
+          <h2>순위 입력</h2>
+        </div>
+        <select id="mapSelect" class="map-select">
+          <option value="">맵을 선택해주세요</option>
+          <option value="랜덤">랜덤</option>
+          <option value="피터팬-시계탑의 거리">피터팬-시계탑의 거리</option>
+          <option value="미지의 섬으로">미지의 섬으로</option>
+          <option value="진격의 삐에로">진격의 삐에로</option>
+          <option value="흥부와 놀부1">흥부와 놀부1</option>
+          <option value="흥부와 놀부2">흥부와 놀부2</option>
+          <option value="피노키오의 모험">피노키오의 모험</option>
+          <option value="인어공주">인어공주</option>
+          <option value="복숭아 동자">복숭아 동자</option>
+          <option value="알라딘(E)">알라딘(E)</option>
+          <option value="설녀를 찾아서">설녀를 찾아서</option>
+          <option value="피리부는 사나이">피리부는 사나이</option>
+          <option value="해와 달">해와 달</option>
+          <option value="슈퍼점프 EASY">슈퍼점프 EASY</option>
+        </select>
+        <select id="randomMapSelect" class="map-select hidden">
+          <option value="">랜덤으로 나온 맵을 선택해주세요</option>
+          <option value="피터팬-시계탑의 거리">피터팬-시계탑의 거리</option>
+          <option value="미지의 섬으로">미지의 섬으로</option>
+          <option value="진격의 삐에로">진격의 삐에로</option>
+          <option value="흥부와 놀부1">흥부와 놀부1</option>
+          <option value="흥부와 놀부2">흥부와 놀부2</option>
+          <option value="피노키오의 모험">피노키오의 모험</option>
+          <option value="인어공주">인어공주</option>
+          <option value="복숭아 동자">복숭아 동자</option>
+          <option value="알라딘(E)">알라딘(E)</option>
+          <option value="설녀를 찾아서">설녀를 찾아서</option>
+          <option value="피리부는 사나이">피리부는 사나이</option>
+          <option value="해와 달">해와 달</option>
+          <option value="슈퍼점프 EASY">슈퍼점프 EASY</option>
+        </select>
+        <div id="scoreInputs" class="grid-wrap"></div>
+        <div class="row">
+          <button id="addRound" class="primary" disabled>점수 추가</button>
+          <button id="clearInputs" class="ghost">다시 입력</button>
+          <div class="spacer"></div>
+          <span id="playStatus" class="pill"></span>
+        </div>
+      </section>
+
+      <section class="card" id="boardCard">
+        <div class="board-layout">
+          <div id="board" class="board-left"></div>
+          <div class="board-right game-log-scroll">
+            <div class="log-header-sticky">최근 기록</div>
+            <div id="gameLog"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card" id="bottomCard">
+      <div class="row">
+        <button id="themeToggle" class="ghost">다크모드: ON</button>
+        <button id="editPlayers" class="ghost hidden">닉네임 수정</button>
+        <button id="undoRound" class="ghost">되돌리기</button>
+        <div class="spacer"></div>
+        <button id="exportData" class="ghost">저장</button>
+        <button id="importData" class="ghost">불러오기</button>
+        <button id="settle" class="primary ghost">정산</button>
+        <button id="resetAll" class="danger">리셋</button>
+        <input id="importFile" type="file" accept="application/json" class="fileHidden" />
+      </div>
+    </section>
+  </div>
+
+  <div class="footer-info">입력된 점수와 정보는 이용자 본인의 기기에만 안전하게 저장되며, 외부로 무단 수집되지 않습니다. · 제작: Xesi</div>
+  
+  <div class="bottom-links">
+    <span style="color: #fbbf24; font-size: 13.5px; font-weight: 800; cursor: default; margin-right: 6px;">업데이트 버전 : v0.3</span>
+    <a href="#" id="openTermsBtn" class="link-btn">이용약관</a>
+    <a href="https://tr.rhaon.co.kr/community/ucc/ucc/6114?page=2&title=%ED%8C%AC%EC%95%84%ED%8A%B8&sort=like" target="_blank" class="link-btn">배경 출처 [클릭]</a>
+  </div>
+
+  <div id="termsModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-box">
+      <h2>이용약관 및 개인정보 처리방침</h2>
+      <div class="modal-body">
+        <p><strong>제1조 (목적)</strong><br>본 사이트(Hall of Glory)는 점령전 점수를 편리하게 기록하고 정산하기 위해 제공되는 유틸리티입니다.</p>
+        <p><strong>제2조 (개인정보 처리 및 보안)</strong><br>이용자가 입력하는 닉네임, 점수 등의 모든 데이터는 별도의 서버로 전송되거나 무단으로 수집되지 않습니다. 모든 정보는 이용자 기기의 웹 브라우저(Local Storage)에만 안전하게 보관됩니다.</p>
+        <p><strong>제3조 (데이터 보호 및 초기화)</strong><br>브라우저의 인터넷 사용 기록(캐시)을 삭제할 경우 저장된 데이터가 초기화될 수 있습니다. 중요한 기록은 반드시 하단의 [저장] 기능을 이용해 백업하시길 권장합니다.</p>
+        <p><strong>제4조 (책임 제한)</strong><br>본 사이트는 무료로 제공되며, 이용자의 기기 문제나 조작 실수로 인한 데이터 유실에 대해 책임을 지지 않습니다.</p>
+      </div>
+      <div class="row">
+        <button id="closeTermsBtn" class="primary" style="width: 100%;">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="resultModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-box result-modal-box">
+      <div id="receiptArea" class="receipt-area"></div>
+      <div class="row" style="margin-top: 24px;">
+        <button id="btnExportImage" class="primary">📸 이미지로 저장</button>
+        <button id="btnCopyText" class="ghost" style="margin-left: 8px;">📝 텍스트 복사</button>
+        <div class="spacer"></div>
+        <button id="closeResult" class="ghost">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="profileModal" class="modal hidden">
+    <div class="modal-overlay" id="profileOverlay"></div>
+    <div class="modal-box profile-box">
+      <div id="profileContent"></div>
+      <div class="row" style="margin-top: 24px;">
+        <button id="closeProfile" class="primary" style="width: 100%;">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-box" style="max-width:400px;">
+      <h2>⚙️ 맞춤 점수 설정</h2>
+      <div class="modal-body">
+        <table class="set-table">
+          <thead>
+            <tr><th>순위</th><th>완주 점수</th><th>리타이어 점수</th></tr>
+          </thead>
+          <tbody id="setTbody"></tbody>
+        </table>
+        <div class="set-row" style="margin-top:16px;">
+          <label style="font-weight:700; font-size:14px; color:var(--text);">초사 점수 (전체 공통)</label>
+          <input type="number" id="setXPoints" style="width:100px; padding:8px; text-align:center;" />
+        </div>
+      </div>
+      <div class="row">
+        <button id="saveSettingsBtn" class="primary" style="width:100%;">설정 저장</button>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button id="closeSettingsBtn" class="ghost" style="width:100%;">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="pinballModal" class="modal hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-box" style="max-width:520px; padding:0; overflow:hidden; max-height:95vh; display:flex; flex-direction:column;">
+      
+      <div id="pinballInputArea" style="padding:30px;">
+        <h2 style="margin:0 0 16px 0;">🎲 내전 핀볼 (팀 섞기)</h2>
+        <p style="margin-top:0; font-size:13px; color:var(--muted);">참여할 8명의 닉네임을 쉼표(,) 또는 줄바꿈으로 입력하세요.</p>
+        <textarea id="pinballInput" rows="5" style="width:100%; background:var(--bg-inner); color:var(--text); border:1px solid var(--border2); padding:12px; border-radius:8px; outline:none; resize:none; line-height:1.6; font-family:inherit; font-size:15px;"></textarea>
+        
+        <div class="row" style="margin-top:20px;">
+          <button id="runPinballBtn" class="primary btn-pinball" style="width:100%; padding:16px; font-size:16px; color:#fff;">운명의 핀볼 시작!</button>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <button id="closePinballBtn1" class="ghost" style="width:100%;">닫기</button>
+        </div>
+      </div>
+
+      <div id="pbCanvasWrap" style="display:none; background:#111827; padding:20px; position:relative; flex-shrink:0;">
+        <div style="position:absolute; top:20px; right:20px; z-index:10; display:flex; gap:8px;">
+          <button id="speedPinballAnim" class="ghost" style="background:rgba(255,255,255,0.15); border:none; padding:6px 12px; color:#fff; border-radius:6px; font-size:12px; cursor:pointer;">⏩ 1배속</button>
+          <button id="skipPinballAnim" class="ghost" style="background:rgba(239,68,68,0.3); border:none; padding:6px 12px; color:#fca5a5; border-radius:6px; font-size:12px; cursor:pointer;">⏭️ 스킵</button>
+        </div>
+        <h3 style="text-align:center; color:#fff; font-size:18px; margin:0 0 16px 0; font-weight:800;">운명의 배정 중... 🎲</h3>
+        <canvas id="pbCanvas" style="width:100%; height:650px; display:block; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:var(--bg-card);"></canvas>
+      </div>
+
+      <div id="pinballResultArea" style="display:none; padding:30px; overflow-y:auto;">
+        <h2 style="text-align:center; margin:0 0 24px 0; color:var(--accent);">🎉 팀 배정 완료!</h2>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div style="background:rgba(239,68,68,0.05); border:1px solid rgba(239,68,68,0.3); border-radius:12px; padding:20px;">
+            <h3 style="color:var(--danger); margin:0 0 16px 0; text-align:center; font-size:16px; font-weight:800;">🔴 RED TEAM</h3>
+            <div id="pbRed" style="text-align:center; font-weight:700; font-size:15px; line-height:2.2; color:var(--text);"></div>
+          </div>
+          <div style="background:rgba(59,130,246,0.05); border:1px solid rgba(59,130,246,0.3); border-radius:12px; padding:20px;">
+            <h3 style="color:var(--blue); margin:0 0 16px 0; text-align:center; font-size:16px; font-weight:800;">🔵 BLUE TEAM</h3>
+            <div id="pbBlue" style="text-align:center; font-weight:700; font-size:15px; line-height:2.2; color:var(--text);"></div>
+          </div>
+        </div>
+        
+        <div class="row" style="margin-top:24px;">
+          <button id="applyPinballBtn" class="primary" style="width:100%; padding:14px; font-size:15px; background-color:var(--primary);">✨ 새 [내전 탭] 생성 및 자동 입력</button>
+        </div>
+        <div class="row" style="margin-top:10px; display:flex; gap:10px;">
+          <button id="copyPinballBtn" class="ghost" style="flex:1;">결과 텍스트 복사</button>
+          <button id="closePinballBtn2" class="ghost" style="flex:1;">닫기</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
