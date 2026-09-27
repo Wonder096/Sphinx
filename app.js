@@ -321,43 +321,6 @@ function escapeHTML(s){
   return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
 
-function computePerPlayerStats(state){
-  const names = normalizeNames(state);
-  const out = {};
-  for(const name of names){
-    out[name] = { bestRank:99, bestCount:0, reCount:0, xCount:0, goalCount:0, totalRank:0, validRanks:0, matches:[] };
-  }
-  (state.history||[]).forEach((h, idx) => {
-    const mapName = h.map || "미지정";
-    names.forEach((name, pIdx) => {
-      const p = h.parsed[pIdx];
-      if(!p) return;
-      const rk = safeInt(p.rank, 0);
-      if(rk < 1 || rk > 8) return;
-      const st = out[name];
-      st.totalRank += rk;
-      st.validRanks += 1;
-      if(rk < st.bestRank){ st.bestRank = rk; st.bestCount = 1; }
-      else if(rk === st.bestRank){ st.bestCount += 1; }
-      if(p.x) st.xCount += 1;
-      else if(p.re) st.reCount += 1;
-      else st.goalCount += 1;
-      st.matches.push({
-        matchNum: idx + 1,
-        map: mapName,
-        rank: rk,
-        re: p.re,
-        x: p.x
-      });
-    });
-  });
-  for(const name of names){
-    if(out[name].bestRank === 99) out[name].bestRank = 0;
-    out[name].avgRank = out[name].validRanks > 0 ? (out[name].totalRank / out[name].validRanks).toFixed(1) : 0;
-  }
-  return out;
-}
-
 window.showPlayerProfile = function(name) {
   const state = window.__state;
   const perStats = computePerPlayerStats(state);
@@ -380,6 +343,96 @@ window.showPlayerProfile = function(name) {
       return `<li>${m.matchNum}번째 판 - (${m.map}) - ${rankStr}</li>`;
     }).reverse().join("") + `</ul>`;
   }
+
+  const html = `
+    <div class="profile-header">
+      <h2 class="profile-name">${escapeHTML(name)} ${isMvp ? '<span class="mvp-badge">👑 MVP</span>' : ''}</h2>
+    </div>
+    <div class="profile-grid">
+      <div class="profile-box">
+        <div class="profile-t">총 획득 점수</div>
+        <div class="profile-v" style="color:#a5b4fc;">${score}점</div>
+      </div>
+      <div class="profile-box">
+        <div class="profile-t">평균 순위</div>
+        <div class="profile-v">${st.avgRank}등</div>
+      </div>
+      <div class="profile-box">
+        <div class="profile-t">1등 횟수</div>
+        <div class="profile-v">${st.bestRank === 1 ? st.bestCount : 0}회</div>
+      </div>
+      <div class="profile-box">
+        <div class="profile-t">완주 / 리타 / 초사</div>
+        <div class="profile-v">${st.goalCount} / <span style="color:var(--danger)">${st.reCount}</span> / ${st.xCount}</div>
+      </div>
+    </div>
+    <div class="profile-recent">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div class="profile-t" style="margin:0;">최근 경기 폼 (최대 30판)</div>
+        <button class="ghost" style="padding:4px 10px; font-size:12px;" onclick="window.copyPlayerProfile('${escapeHTML(name)}')">📋 전체 복사</button>
+      </div>
+      ${recentHTML}
+    </div>
+  `;
+
+  $("#profileContent").innerHTML = html;
+  $("#profileModal").classList.remove("hidden");
+};
+
+window.copyPlayerProfile = function(name) {
+  const state = window.__state;
+  const perStats = computePerPlayerStats(state);
+  const st = perStats[name];
+  if(!st) return;
+
+  const recent30 = st.matches.slice(-30);
+  if(recent30.length === 0) {
+    alert("복사할 기록이 없습니다.");
+    return;
+  }
+
+  let txt = `[ ${name} 님의 최근 경기 폼 ]\n\n`;
+  txt += `■ 경기 기록\n`;
+  
+  recent30.forEach(m => {
+    let rankStr = `${m.rank}등`;
+    if (m.x) rankStr = `${m.rank}등 초사`;
+    else if (m.re) rankStr = `${m.rank}등 리타`;
+    txt += `${m.matchNum}번째 판 - (${m.map}) - ${rankStr}\n`;
+  });
+
+  const mapStats = {};
+  recent30.forEach(m => {
+    if(!mapStats[m.map]) {
+      mapStats[m.map] = { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, re:0, x:0 };
+    }
+    if(m.x) mapStats[m.map].x++;
+    else if(m.re) mapStats[m.map].re++;
+    else mapStats[m.map][m.rank]++;
+  });
+
+  txt += `\n■ 맵별 등수 통계\n`;
+  for(const map in mapStats) {
+    txt += `[${map}] `;
+    const stats = mapStats[map];
+    const parts = [];
+    for(let i=1; i<=8; i++) {
+      if(stats[i] > 0) parts.push(`${i}등 : ${stats[i]}번`);
+    }
+    if(stats.re > 0) parts.push(`리타 : ${stats.re}번`);
+    if(stats.x > 0) parts.push(`초사 : ${stats.x}번`);
+    
+    txt += parts.join(", ") + "\n";
+  }
+
+  if (!navigator.clipboard) {
+    fallbackCopyTextToClipboard(txt.trim());
+    return;
+  }
+  navigator.clipboard.writeText(txt.trim()).then(() => {
+    alert("프로필 기록이 복사되었습니다!");
+  }).catch(() => fallbackCopyTextToClipboard(txt.trim()));
+};
 
   const html = `
     <div class="profile-header">
