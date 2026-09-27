@@ -321,6 +321,42 @@ function escapeHTML(s){
   return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
 
+function computePerPlayerStats(state) {
+  const stats = {};
+  state.players.forEach(p => {
+    if(!p) return;
+    stats[p] = { avgRank: 0, bestRank: 8, bestCount: 0, goalCount: 0, reCount: 0, xCount: 0, matches: [] };
+  });
+
+  state.history.forEach((h, idx) => {
+    state.players.forEach((p, pIdx) => {
+      if(!p || !stats[p]) return;
+      const parsed = h.parsed[pIdx];
+      const st = stats[p];
+      
+      st.matches.push({ matchNum: idx + 1, map: h.map, rank: parsed.rank, re: parsed.re, x: parsed.x });
+      
+      if(parsed.x) st.xCount++;
+      else if(parsed.re) st.reCount++;
+      else st.goalCount++;
+
+      if(parsed.rank < st.bestRank) {
+        st.bestRank = parsed.rank;
+        st.bestCount = 1;
+      } else if(parsed.rank === st.bestRank) {
+        st.bestCount++;
+      }
+    });
+  });
+
+  for(const p in stats) {
+    const st = stats[p];
+    const validRanks = st.matches.filter(m => !m.x && !m.re).map(m => m.rank);
+    st.avgRank = validRanks.length > 0 ? (validRanks.reduce((a,b)=>a+b, 0) / validRanks.length).toFixed(1) : "-";
+  }
+  return stats;
+}
+
 window.showPlayerProfile = function(name) {
   const state = window.__state;
   const perStats = computePerPlayerStats(state);
@@ -695,7 +731,7 @@ function render(){
     applyFinishedLock();
     if(window.updateAddBtnState) window.updateAddBtnState();
     
-    const settleBtn = $("#settle");     if(settleBtn) {       if(state.history.length > 0) {         settleBtn.classList.add("primary","settleReady");         settleBtn.classList.remove("ghost");       } else {         settleBtn.classList.remove("primary","settleReady");         if(!settleBtn.classList.contains("ghost")) settleBtn.classList.add("ghost");       }     }   } }  function registerPlayers() {   const state = window.__state;   const conf = getModeConfig(state.mode);   const inputs = $$("#playerInputs input");
+    const settleBtn = $("#settle");     if(settleBtn){       if(state.history.length > 0){         settleBtn.classList.add("primary","settleReady");         settleBtn.classList.remove("ghost");       }else{         settleBtn.classList.remove("primary","settleReady");         if(!settleBtn.classList.contains("ghost")) settleBtn.classList.add("ghost");       }     }   } }  function registerPlayers(){   const state = window.__state;   const conf = getModeConfig(state.mode);   const inputs = $$("#playerInputs input");
   const names = inputs.map(i=>i.value.trim()).slice(0, conf.rosterSize);
 
   if(names.some(n=>!n)) return alert("닉네임을 모두 입력해주세요.");
@@ -755,7 +791,7 @@ function addRound(){
   if(isFinished(state)) return alert("30판이 모두 종료되었습니다.");
 
   const mapSelect = $("#mapSelect");
-  const rMapSelect = $("#randomMapSelect");      if(mapSelect && !mapSelect.value) {     alert("맵을 먼저 골라주세요!");     mapSelect.focus();     return;   }   if(mapSelect && mapSelect.value === "랜덤") {     if(rMapSelect && !rMapSelect.value) {       alert("랜덤으로 나온 맵을 선택해주세요!");       rMapSelect.focus();       return;     }   }    const inputs = $$("#scoreInputs input");
+  const rMapSelect = $("#randomMapSelect");   if(mapSelect && !mapSelect.value) {     alert("맵을 먼저 골라주세요!");     mapSelect.focus();     return;   }   if(mapSelect && mapSelect.value === "랜덤") {     if(rMapSelect && !rMapSelect.value) {       alert("랜덤으로 나온 맵을 선택해주세요!");       rMapSelect.focus();       return;     }   }   const inputs = $$("#scoreInputs input");
   const tokens = inputs.map(i=>i.value.trim());
 
   let parsed;
@@ -1488,43 +1524,3 @@ window.onload = function() {
     if(lv) lv.classList.remove("hidden");
   }
 };
-
-// ==========================================
-// 복사 과정에서 빠져있던 누락된 필수 함수 (안전장치 추가)
-// 없으면 'showPlayerProfile', 'settle' 기능 작동 시 에러 남.
-function computePerPlayerStats(state) {
-  const stats = {};
-  state.players.forEach(p => {
-    if(!p) return;
-    stats[p] = { avgRank: 0, bestRank: 8, bestCount: 0, goalCount: 0, reCount: 0, xCount: 0, matches: [] };
-  });
-
-  state.history.forEach((h, idx) => {
-    state.players.forEach((p, pIdx) => {
-      if(!p || !stats[p]) return;
-      const parsed = h.parsed[pIdx];
-      const st = stats[p];
-      
-      st.matches.push({ matchNum: idx + 1, map: h.map, rank: parsed.rank, re: parsed.re, x: parsed.x });
-      
-      if(parsed.x) st.xCount++;
-      else if(parsed.re) st.reCount++;
-      else st.goalCount++;
-
-      if(parsed.rank < st.bestRank) {
-        st.bestRank = parsed.rank;
-        st.bestCount = 1;
-      } else if(parsed.rank === st.bestRank) {
-        st.bestCount++;
-      }
-    });
-  });
-
-  for(const p in stats) {
-    const st = stats[p];
-    const validRanks = st.matches.filter(m => !m.x && !m.re).map(m => m.rank);
-    st.avgRank = validRanks.length > 0 ? (validRanks.reduce((a,b)=>a+b, 0) / validRanks.length).toFixed(1) : "-";
-  }
-  return stats;
-}
-// ==========================================
